@@ -1,4 +1,4 @@
-<h1 align="center">Turns Codebase into Easy Tutorial with AI</h1>
+# Tutorial: Turns Codebase into Easy Tutorial with AI
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
  <a href="https://discord.gg/hUHHE9Sa6T">
@@ -18,7 +18,7 @@ This is a tutorial project of [Pocket Flow](https://github.com/The-Pocket/Pocket
 
 - Check out the [Substack Post Tutorial](https://zacharyhuang.substack.com/p/ai-codebase-knowledge-builder-full) for more!
 
-&nbsp;&nbsp;**🔸 🎉 Reached Hacker News Front Page** (April 2025) with >800 up‑votes:  [Discussion »](https://news.ycombinator.com/item?id=43739456)
+&nbsp;&nbsp;**🔸 🎉 Reached Hacker News Front Page** (April 2025) with >800 up‑votes:  [Discussion »](https://news.ycombinator.com/item?id=43739456)
 
 ## ⭐ Example Results for Popular GitHub Repositories!
 
@@ -92,7 +92,14 @@ This is a tutorial project of [Pocket Flow](https://github.com/The-Pocket/Pocket
    python utils/call_llm.py
    ```
 
-4. Generate a complete codebase tutorial by running the main script:
+4. **Important**: Create a `.env` file in the root directory with your API keys:
+   ```
+   # Copy from .env.example and fill in your actual API keys
+   GEMINI_API_KEY=your_actual_api_key_here
+   ```
+   Note: The `.env` file is ignored by Git and won't be pushed to the repository, keeping your API keys safe.
+
+5. Generate a complete codebase tutorial by running the main script:
     ```bash
     # Analyze a GitHub repository
     python main.py --repo https://github.com/username/repo --include "*.py" "*.js" --exclude "tests/*" --max-size 50000
