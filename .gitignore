@@ -98,5 +98,5 @@ coverage/
 # LLM cache
 llm_cache.json
 
-# Output files
-output/
+# We want to include the output directory, so we don't exclude it here
+# output/ 
