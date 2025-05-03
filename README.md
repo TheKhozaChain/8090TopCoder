@@ -122,6 +122,36 @@ This is a tutorial project of [Pocket Flow](https://github.com/The-Pocket/Pocket
 
 The application will crawl the repository, analyze the codebase structure, generate tutorial content in the specified language, and save the output in the specified directory (default: ./output).
 
+### 🔑 GitHub Token Rate Limits
+
+When analyzing large repositories or making multiple requests, you might encounter GitHub API rate limits. Here's what to do:
+
+1. **Create a GitHub Personal Access Token**:
+   - Go to [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+   - Create a new token with the `repo` scope (for private repos) or just `public_repo` for public repositories
+   - No additional permissions are needed for reading public repositories
+
+2. **Use the token with the application**:
+   ```bash
+   # Use the token directly in the command
+   python main.py --repo https://github.com/username/repo --token YOUR_GITHUB_TOKEN
+   
+   # Or set it as an environment variable
+   export GITHUB_TOKEN=YOUR_GITHUB_TOKEN
+   python main.py --repo https://github.com/username/repo
+   ```
+
+3. **When tokens run out**:
+   - If you encounter a message like "API rate limit exceeded," you have a few options:
+   - Wait for the rate limit to reset (usually 1 hour)
+   - Use a different GitHub token
+   - Break your analysis into smaller segments with more focused file patterns
+   - Consider cloning the repository locally and using the `--dir` option instead
+
+4. **For frequent users**:
+   - Consider upgrading to GitHub Pro for higher rate limits
+   - You can also create multiple tokens and rotate between them
+
 ## 📚 Documentation Generator System
 
 This project now includes a documentation generator system that creates interactive HTML documentation from markdown files.
