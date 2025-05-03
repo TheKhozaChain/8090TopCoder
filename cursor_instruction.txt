@@ -1,0 +1,101 @@
+# Cursor Instructions for PocketFlow Tutorial Codebase Knowledge
+
+## Project Overview
+This project uses PocketFlow, a minimalist 100-line LLM framework, to analyze GitHub repositories and generate beginner-friendly tutorials. It identifies core abstractions, relationships, and creates structured documentation with visualizations.
+
+## Setup and Configuration
+
+### 1. Installation
+```bash
+pip install -r requirements.txt
+```
+
+### 2. API Configuration
+- Create a `.env` file in the root directory (this is git-ignored for security)
+- Add your API keys as follows:
+```
+GEMINI_API_KEY=your_actual_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-pro-exp-03-25
+```
+
+- The LLM wrapper utility is in `utils/call_llm.py`:
+  - Default configuration uses Google's Gemini 2.5 Pro API
+  - Alternative configurations for Claude and OpenAI are available (commented out)
+  - Includes caching to avoid duplicate API calls
+
+### 3. File Structure
+- `main.py`: Entry point, handles CLI arguments
+- `flow.py`: Flow orchestration for PocketFlow
+- `nodes.py`: Defines processing nodes in the tutorial generation pipeline
+- `utils/`: Utility functions, including the LLM wrapper
+- `docs/`: Documentation and design files
+- `output/`: Generated tutorials (each project gets its own directory)
+
+## API Specifications
+
+### 1. LLM API (utils/call_llm.py)
+```python
+def call_llm(prompt: str, use_cache: bool = True) -> str:
+    """
+    Call the LLM API with a prompt, optionally using a cache.
+    
+    Parameters:
+    - prompt: Text prompt to send to the LLM
+    - use_cache: Whether to use cached responses (default: True)
+    
+    Returns:
+    - string: The LLM's response
+    """
+```
+
+### 2. File Operations
+The project operates on different types of files:
+
+#### Reading Files
+- Source code files are read during repository analysis
+- Examples: Python files (.py), JavaScript files (.js), etc.
+- Configure with `--include` and `--exclude` patterns
+
+#### Writing Files
+- Generated markdown files are written to `output/<project_name>/`
+- `index.md`: Main tutorial with project overview and mermaid diagram
+- Chapter files (numbered): Detailed explanations of components
+
+### 3. Mermaid Diagram Specifications
+- Mermaid diagrams use flowchart TD (top-down) syntax
+- Styling with CSS classes helps visualize component types
+- Connection syntax: `A -->|"label"| B`
+- GitHub and many modern markdown viewers render these diagrams
+
+## Usage Examples
+
+### Analyze GitHub Repository
+```bash
+python main.py --repo https://github.com/username/repo --include "*.py" "*.js" --exclude "tests/*"
+```
+
+### Analyze Local Directory
+```bash
+python main.py --dir /path/to/your/codebase --include "*.py"
+```
+
+### Generate Non-English Tutorial
+```bash
+python main.py --repo https://github.com/username/repo --language "Chinese"
+```
+
+## Important Notes
+
+1. **API Keys**: Never commit your API keys to Git. Always use the .env file.
+
+2. **Cache File**: The `llm_cache.json` stores previous API calls to save tokens and speed up development.
+
+3. **Output Directory**: Generated tutorials are stored in the `output/` directory, which is now included in the Git repository.
+
+4. **Visualization**: Mermaid diagrams can be viewed on GitHub, in VSCode with extensions, or with online viewers like https://mermaid.live/
+
+5. **Storage Format**: All tutorials are in Markdown format, with structured sections and code snippets where appropriate.
+
+## Testing and Verification
+- Test LLM connectivity: `python test_llm.py`
+- After making changes, run a small test repository to verify functionality 
