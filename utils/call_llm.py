@@ -1,4 +1,3 @@
-from google import genai
 import os
 import logging
 import json
@@ -20,8 +19,18 @@ logger.addHandler(file_handler)
 # Simple cache configuration
 cache_file = "llm_cache.json"
 
-# By default, we Google Gemini 2.5 pro, as it shows great performance for code understanding
-def call_llm(prompt: str, use_cache: bool = True) -> str:
+def call_llm(prompt: str, use_cache: bool = True, model: str = None) -> str:
+    """
+    Call OpenAI LLM with the given prompt.
+    
+    Args:
+        prompt: The prompt to send to the LLM
+        use_cache: Whether to use caching for responses
+        model: The model to use (defaults to gpt-4o)
+    
+    Returns:
+        The LLM response as a string
+    """
     # Log the prompt
     logger.info(f"PROMPT: {prompt}")
     
@@ -37,83 +46,85 @@ def call_llm(prompt: str, use_cache: bool = True) -> str:
                 logger.warning(f"Failed to load cache, starting with empty cache")
         
         # Return from cache if exists
-        if prompt in cache:
-            logger.info(f"RESPONSE: {cache[prompt]}")
-            return cache[prompt]
+        cache_key = f"{model or 'gpt-4o'}:{prompt}"
+        if cache_key in cache:
+            logger.info(f"RESPONSE (cached): {cache[cache_key]}")
+            return cache[cache_key]
     
-    # Call the LLM if not in cache or cache disabled
-    # client = genai.Client(
-    #     vertexai=True, 
-    #     # TODO: change to your own project id and location
-    #     project=os.getenv("GEMINI_PROJECT_ID", "your-project-id"),
-    #     location=os.getenv("GEMINI_LOCATION", "us-central1")
-    # )
-    # You can comment the previous line and use the AI Studio key instead:
-    client = genai.Client(
-        api_key=os.getenv("GEMINI_API_KEY", "your-api_key"),
-    )
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-pro-exp-03-25")
-    response = client.models.generate_content(
-        model=model,
-        contents=[prompt]
-    )
-    response_text = response.text
-    
-    # Log the response
-    logger.info(f"RESPONSE: {response_text}")
-    
-    # Update cache if enabled
-    if use_cache:
-        # Load cache again to avoid overwrites
-        cache = {}
-        if os.path.exists(cache_file):
-            try:
-                with open(cache_file, 'r') as f:
-                    cache = json.load(f)
-            except:
-                pass
+    # Call OpenAI API
+    try:
+        from openai import OpenAI
         
-        # Add to cache and save
-        cache[prompt] = response_text
-        try:
-            with open(cache_file, 'w') as f:
-                json.dump(cache, f)
-        except Exception as e:
-            logger.error(f"Failed to save cache: {e}")
-    
-    return response_text
+        # Get API key from environment variable
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        
+        client = OpenAI(api_key=api_key)
+        
+        # Use provided model or default to gpt-4o
+        model_name = model or os.getenv("OPENAI_MODEL", "gpt-4o")
+        
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        
+        response_text = response.choices[0].message.content
+        
+        # Log the response
+        logger.info(f"RESPONSE: {response_text}")
+        
+        # Update cache if enabled
+        if use_cache:
+            # Load cache again to avoid overwrites
+            cache = {}
+            if os.path.exists(cache_file):
+                try:
+                    with open(cache_file, 'r') as f:
+                        cache = json.load(f)
+                except:
+                    pass
+            
+            # Add to cache and save
+            cache_key = f"{model_name}:{prompt}"
+            cache[cache_key] = response_text
+            try:
+                with open(cache_file, 'w') as f:
+                    json.dump(cache, f)
+            except Exception as e:
+                logger.error(f"Failed to save cache: {e}")
+        
+        return response_text
+        
+    except Exception as e:
+        logger.error(f"Error calling OpenAI API: {e}")
+        raise
 
-# # Use Anthropic Claude 3.7 Sonnet Extended Thinking
-# def call_llm(prompt, use_cache: bool = True):
-#     from anthropic import Anthropic
-#     client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", "your-api-key"))
-#     response = client.messages.create(
-#         model="claude-3-7-sonnet-20250219",
-#         max_tokens=21000,
-#         thinking={
-#             "type": "enabled",
-#             "budget_tokens": 20000
-#         },
-#         messages=[
-#             {"role": "user", "content": prompt}
-#         ]
-#     )
-#     return response.content[1].text
-
-# # Use OpenAI o1
-# def call_llm(prompt, use_cache: bool = True):    
-#     from openai import OpenAI
-#     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
-#     r = client.chat.completions.create(
-#         model="o1",
-#         messages=[{"role": "user", "content": prompt}],
-#         response_format={
-#             "type": "text"
-#         },
-#         reasoning_effort="medium",
-#         store=False
-#     )
-#     return r.choices[0].message.content
+# Alternative models for specific use cases
+def call_llm_o1(prompt: str, use_cache: bool = True) -> str:
+    """Call OpenAI o1 model for complex reasoning tasks."""
+    try:
+        from openai import OpenAI
+        
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        
+        client = OpenAI(api_key=api_key)
+        
+        response = client.chat.completions.create(
+            model="o1",
+            messages=[{"role": "user", "content": prompt}],
+            reasoning_effort="medium"
+        )
+        
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        logger.error(f"Error calling OpenAI o1 API: {e}")
+        raise
 
 if __name__ == "__main__":
     test_prompt = "Hello, how are you?"

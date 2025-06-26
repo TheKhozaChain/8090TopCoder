@@ -163,3 +163,155 @@ shared = {
         *   `prep`: Read `project_name`, `relationships` (potentially translated summary/labels), `chapter_order` (indices), `abstractions` (potentially translated name/desc), `chapters` (list of potentially translated content), `repo_url`, and `output_dir` from shared store. Generate a Mermaid `flowchart TD` string based on `relationships["details"]`, using indices to identify nodes (potentially translated names) and the concise `label` (potentially translated) for edges. Construct the content for `index.md` (including potentially translated summary, Mermaid diagram, and ordered links to chapters using potentially translated names derived using `chapter_order` and `abstractions`). Define the output directory path (e.g., `./output_dir/project_name`). Prepare a list of `{ "filename": "01_...", "content": "..." }` for chapters, adding the English attribution footer to each chapter's content. Add the English attribution footer to the index content.
         *   `exec`: Create the output directory. Write the generated `index.md` content. Iterate through the prepared chapter file list and write each chapter's content to its corresponding `.md` file in the output directory.
         *   `post`: Write the final `output_path` to `shared["final_output_dir"]`. Log completion.
+
+# Reimbursement System Reverse Engineering Challenge
+
+## 1. Requirements Analysis
+
+**Problem**: Reverse-engineer a 60-year-old travel reimbursement system using only:
+- 1,000 historical input/output examples 
+- Employee interviews with system hints
+- 3 inputs: trip_duration_days, miles_traveled, total_receipts_amount
+- 1 output: reimbursement amount (float, rounded to 2 decimal places)
+
+**Key Challenges**:
+- Complex, non-linear patterns with multiple interacting factors
+- Suspected bugs/quirks that must be preserved
+- Different rules for different scenarios (trip length, mileage tiers, etc.)
+- Seasonal or temporal variations mentioned in interviews
+
+**AI System Fit**: EXCELLENT - This is pattern recognition and rule inference from data, perfect for LLM analysis.
+
+## 2. Flow Design
+
+We'll use a **Workflow** pattern with **Map Reduce** for data analysis:
+
+```mermaid
+flowchart LR
+    start[Load Data] --> analyze[Analyze Patterns]
+    analyze --> segment[Segment Cases]
+    segment --> rules[Extract Rules]
+    rules --> implement[Implement Logic]
+    implement --> test[Test & Validate]
+    test --> refine[Refine Rules]
+    refine -->|iterate| rules
+    test --> output[Generate Solution]
+```
+
+### High-Level Node Descriptions:
+
+1. **LoadData**: Parse JSON files and employee interviews
+2. **AnalyzePatterns**: Use LLM to identify patterns in the data
+3. **SegmentCases**: Group similar cases to find rules
+4. **ExtractRules**: Generate mathematical formulas for each segment
+5. **ImplementLogic**: Create the calculation engine
+6. **TestValidate**: Compare against known outputs
+7. **RefineRules**: Iterate based on errors
+8. **GenerateSolution**: Create the final run.sh script
+
+## 3. Utilities Needed
+
+### Data Processing:
+- `load_cases.py`: Parse JSON test cases
+- `load_interviews.py`: Extract insights from employee interviews
+- `statistical_analysis.py`: Basic data analysis functions
+
+### Analysis:
+- `pattern_detector.py`: LLM-powered pattern recognition
+- `rule_extractor.py`: Convert patterns to mathematical rules
+- `case_segmenter.py`: Group similar cases
+
+### Implementation:
+- `formula_generator.py`: Create calculation formulas
+- `test_runner.py`: Run validation tests
+- `script_generator.py`: Generate final shell script
+
+## 4. Shared Store Design
+
+```python
+shared = {
+    "raw_data": {
+        "public_cases": [],      # List of test cases
+        "private_cases": [],     # Cases without answers
+        "interviews": {}         # Extracted interview insights
+    },
+    "analysis": {
+        "patterns": [],          # Discovered patterns
+        "segments": {},          # Case groupings
+        "rules": {}              # Mathematical rules per segment
+    },
+    "implementation": {
+        "formulas": {},          # Final calculation formulas  
+        "test_results": {},      # Validation results
+        "accuracy_score": 0.0    # Overall accuracy
+    },
+    "output": {
+        "run_script": "",        # Generated shell script
+        "results_file": ""       # Private case results
+    }
+}
+```
+
+## 5. Node Design
+
+### LoadData (Regular Node)
+- **prep**: Read file paths from shared
+- **exec**: Parse JSON and markdown files
+- **post**: Store in shared["raw_data"]
+
+### AnalyzePatterns (Regular Node)  
+- **prep**: Get raw data
+- **exec**: Use LLM to analyze patterns and extract insights
+- **post**: Store patterns in shared["analysis"]["patterns"]
+
+### SegmentCases (BatchNode)
+- **prep**: Return list of pattern criteria
+- **exec**: Group cases matching each criteria
+- **post**: Store segments in shared["analysis"]["segments"]
+
+### ExtractRules (BatchNode)
+- **prep**: Return list of segments
+- **exec**: Use LLM to derive mathematical rules for each segment
+- **post**: Store rules in shared["analysis"]["rules"]
+
+### ImplementLogic (Regular Node)
+- **prep**: Get all rules and patterns
+- **exec**: Create unified calculation logic
+- **post**: Store implementation in shared["implementation"]
+
+### TestValidate (Regular Node)
+- **prep**: Get implementation and test cases
+- **exec**: Run validation tests and calculate accuracy
+- **post**: Store results and accuracy score
+
+### RefineRules (Regular Node) - conditional
+- **prep**: Get test results and current rules
+- **exec**: Use LLM to improve rules based on errors
+- **post**: Update rules and trigger iteration if needed
+
+### GenerateSolution (Regular Node)
+- **prep**: Get final implementation
+- **exec**: Generate shell script and run on private cases
+- **post**: Save final outputs
+
+## 6. Key Insights from Interviews
+
+From the employee interviews, key patterns to investigate:
+
+1. **Per Diem Base**: ~$100/day base rate
+2. **5-Day Bonus**: Special bonus for exactly 5-day trips
+3. **Mileage Tiers**: First 100 miles full rate (~$0.58), then declining
+4. **Receipt Caps**: Diminishing returns on high receipts, penalties for very low
+5. **Efficiency Bonus**: High miles/day ratios get bonuses
+6. **Rounding Quirks**: Receipt amounts ending in .49/.99 get extra money
+7. **Seasonal Variations**: Possible quarterly differences
+8. **Sweet Spots**: Certain combinations work better than others
+
+## 7. Success Criteria
+
+- **Primary**: Match 1,000 public cases with minimal error
+- **Target**: >95% exact matches (±$0.01)
+- **Secondary**: >98% close matches (±$1.00)
+- **Final**: High accuracy on 5,000 private cases
+
+This systematic approach will help us reverse-engineer the complex legacy system while preserving its quirks and achieving high accuracy.
